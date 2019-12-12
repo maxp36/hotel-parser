@@ -1,0 +1,24 @@
+version: "3.3"
+services:
+  messenger:
+    build: .
+    restart: on-failure
+    ports:
+      - 8081:8081
+
+  postgres:
+    image: postgres:11.5
+    restart: on-failure
+    environment:
+      - POSTGRES_DB=${HOTEL_PARSER_DB_NAME}
+      - POSTGRES_USER=${HOTEL_PARSER_DB_USER}
+      - POSTGRES_PASSWORD=${HOTEL_PARSER_DB_PASSWORD}
+    ports:
+      - 5432:5432
+
+  migrate:
+    image: migrate/migrate
+    restart: on-failure
+    volumes:
+      - ./db/migrations:/migrations
+    command: ["-path", "/migrations", "-database",  "postgres://${HOTEL_PARSER_DB_USER}:${HOTEL_PARSER_DB_PASSWORD}@postgres:5432/${HOTEL_PARSER_DB_NAME}?sslmode=disable", "up"]
