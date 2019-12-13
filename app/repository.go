@@ -1,4 +1,4 @@
-package parser
+package app
 
 // Repository represent the parser's Postgres repository contract.
 type Repository interface {
