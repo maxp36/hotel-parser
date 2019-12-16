@@ -1,10 +1,14 @@
 version: "3.3"
 services:
-  messenger:
+  hotel-parser:
     build: .
     restart: on-failure
+    volumes: 
+      - ./raw:/hotel-parser/build/raw
+      - ./.env:/hotel-parser/build/.env
     ports:
-      - 8081:8081
+      - 8083:8081
+    command: ./app
 
   postgres:
     image: postgres:11.5
@@ -14,7 +18,7 @@ services:
       - POSTGRES_USER=${HOTEL_PARSER_DB_USER}
       - POSTGRES_PASSWORD=${HOTEL_PARSER_DB_PASSWORD}
     ports:
-      - 5432:5432
+      - 54323:5432
 
   migrate:
     image: migrate/migrate

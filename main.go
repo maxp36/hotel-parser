@@ -7,6 +7,8 @@ import (
 	"github.com/maxp36/hotel-parser/app/delivery/file"
 	"github.com/maxp36/hotel-parser/app/repository/postgres"
 	"github.com/maxp36/hotel-parser/app/service"
+
+	_ "github.com/lib/pq"
 )
 
 var dir string
@@ -25,5 +27,10 @@ func main() {
 
 	parser := service.NewParser(repo)
 
-	_ = file.NewFileHandler(dir, parser)
+	handler := file.NewFileHandler(dir, parser)
+
+	// if err := handler.Handle(); err != nil {
+	// 	log.Println(err)
+	// }
+	handler.Handle()
 }
