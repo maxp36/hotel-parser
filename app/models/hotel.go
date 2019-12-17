@@ -18,3 +18,14 @@ type Hotel struct {
 	Longitude   float64 `json:"longitude" db:"longitude"`
 	Rating      float64 `json:"rating" db:"rating"`
 }
+
+type HotelRaw struct {
+	Name        string
+	Description string
+	CountryCode string
+	City        string
+	Address     string
+	Latitude    float64
+	Longitude   float64
+	Rating      float64
+}
