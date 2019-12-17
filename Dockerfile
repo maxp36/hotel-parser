@@ -12,12 +12,15 @@ RUN apk update && apk add --update --no-cache \
   && update-ca-certificates
 
 WORKDIR /hotel-parser
-COPY . .
+COPY go.mod .
+COPY go.sum .
 
-# COPY .env ./build/.env
-# COPY raw ./build/raw
+COPY .env ./build/.env
+COPY raw ./build/raw
 
 RUN go mod download
+
+COPY . .
 
 RUN go env
 
@@ -36,6 +39,6 @@ COPY --from=builder /hotel-parser/build /hotel-parser
 
 WORKDIR /hotel-parser
 
-ENTRYPOINT ["/bin/sh"]
+# ENTRYPOINT ["/bin/sh"]
 
 # CMD [ "./app", "-dir=raw/" ]
