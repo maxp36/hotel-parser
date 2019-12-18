@@ -14,7 +14,7 @@ type JSONParser interface {
 
 // CSVParser represent the CSV parser's service
 type CSVParser interface {
-	ParseCSV(data []byte) error
+	ParseCSV(columns, data []string) error
 }
 
 // XMLParser represent the XML parser's service

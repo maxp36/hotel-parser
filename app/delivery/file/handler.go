@@ -2,6 +2,7 @@ package file
 
 import (
 	"bufio"
+	"encoding/csv"
 	"io"
 	"log"
 	"os"
@@ -78,28 +79,51 @@ func (h *fileHandler) handleJSON(path string) {
 		if err != nil {
 			if err == io.EOF {
 				log.Println("EOF: ", err)
-				// break
+				break
 			}
 			log.Println("handleJSON 2: ", err)
-			// break
+			break
 		}
 
 		// log.Printf("handleJSON 3: %s\n", data)
-		h.Parser.ParseJSON(data)
+		err = h.Parser.ParseJSON(data)
+		if err != nil {
+			log.Println("handleJSON 4: ", err)
+		}
 	}
 }
 
 func (h *fileHandler) handleCSV(path string) {
 
-	// file, err := os.Open(path)
-	// if err != nil {
-	// 	log.Println(err)
-	// }
+	file, err := os.Open(path)
+	if err != nil {
+		log.Println("handleCSV 1: ", err)
+	}
 
-	// r := csv.NewReader(file)
-	// r.R
+	reader := csv.NewReader(file)
 
-	// _ = h.Parser.ParseCSV()
+	columns, err := reader.Read()
+	if err != nil {
+		log.Println("handleCSV 2: ", err)
+	}
+
+	for {
+		data, err := reader.Read()
+		if err != nil {
+			if err == io.EOF {
+				log.Println("EOF: ", err)
+				break
+			}
+			log.Println("handleCSV 3: ", err)
+			break
+		}
+
+		// log.Printf("handleCSV 3: %s\n", data)
+		err = h.Parser.ParseCSV(columns, data)
+		if err != nil {
+			log.Println("handleCSV 4: ", err)
+		}
+	}
 }
 
 func (h *fileHandler) handleXML(path string) {

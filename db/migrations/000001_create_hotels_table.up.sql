@@ -13,6 +13,6 @@ CREATE TABLE IF NOT EXISTS hotels (
     city varchar(64) NOT NULL,
     address varchar(512) NOT NULL,
     latitude numeric(15, 13) NOT NULL,
-    longitude numeric(15, 13) NOT NULL,
+    longitude numeric(16, 13) NOT NULL,
     rating numeric(5, 3) NOT NULL
 );

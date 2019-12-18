@@ -1,14 +1,12 @@
 package service
 
-import "github.com/maxp36/hotel-parser/app"
+import (
+	"bytes"
+	"encoding/json"
 
-import "encoding/json"
-
-import "bytes"
-
-import "github.com/maxp36/hotel-parser/app/models"
-
-import "log"
+	"github.com/maxp36/hotel-parser/app"
+	"github.com/maxp36/hotel-parser/app/models"
+)
 
 type parser struct {
 	R app.Repository
@@ -23,7 +21,7 @@ func NewParser(r app.Repository) app.Parser {
 
 func (s *parser) ParseJSON(data []byte) error {
 
-	var hotel models.HotelRaw
+	var hotel models.HotelJSON
 
 	dec := json.NewDecoder(bytes.NewReader(data))
 	err := dec.Decode(&hotel)
@@ -31,17 +29,43 @@ func (s *parser) ParseJSON(data []byte) error {
 		return err
 	}
 
-	log.Printf("%#v", hotel)
-
-	// id, err := s.R.AddHotel(&hotel)
-	// if err != nil {
-	// 	return err
-	// }
+	err = s.R.AddHotel(hotel.ToHotelRaw())
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func (s *parser) ParseCSV(data []byte) error {
+func (s *parser) ParseCSV(columns, data []string) error {
+
+	var hotel models.HotelCSV
+
+	m := make(map[string]string)
+	for i, c := range columns {
+		m[c] = data[i]
+	}
+
+	mar, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(mar, &hotel)
+	if err != nil {
+		return err
+	}
+
+	dbHotel, err := hotel.ToHotelRaw()
+	if err != nil {
+		return err
+	}
+
+	err = s.R.AddHotel(dbHotel)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
