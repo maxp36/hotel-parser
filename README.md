@@ -9,7 +9,6 @@
     - set necessary ports binding
 3. Run `docker-compose up -d`
 
-
 ## Migrate DB
 
 See <https://github.com/golang-migrate/migrate/>
