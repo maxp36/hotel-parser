@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"encoding/csv"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/maxp36/hotel-parser/app"
 )
@@ -14,6 +16,8 @@ import (
 type fileHandler struct {
 	Dir    string
 	Parser app.Parser
+	wg     *sync.WaitGroup
+	errs   chan error
 }
 
 // NewFileHandler inits file handler for parsing files
@@ -21,10 +25,15 @@ func NewFileHandler(dir string, p app.Parser) app.Handler {
 	return &fileHandler{
 		Dir:    dir,
 		Parser: p,
+		wg:     &sync.WaitGroup{},
+		errs:   make(chan error),
 	}
 }
 
 func (h *fileHandler) Handle() error {
+
+	h.wg = &sync.WaitGroup{}
+	h.errs = make(chan error)
 
 	fpaths := make([]string, 0)
 
@@ -47,22 +56,37 @@ func (h *fileHandler) Handle() error {
 	for _, p := range fpaths {
 		switch filepath.Ext(p) {
 		case ".json":
-			h.handleJSON(p)
+			go h.handleJSON(p)
+			h.wg.Add(1)
 		case ".csv":
-			h.handleCSV(p)
+			go h.handleCSV(p)
+			h.wg.Add(1)
 		case ".xml":
-			h.handleXML(p)
+			go h.handleXML(p)
+			h.wg.Add(1)
 		}
 	}
 
-	return nil
+	// select {
+	// case err := <-h.errs:
+	// 	return err
+	// case h.wg.Wait():
+
+	// }
+	h.wg.Wait()
+
+	return <-h.errs
 }
 
-func (h *fileHandler) handleJSON(path string) error {
+func (h *fileHandler) handleJSON(path string) {
+
+	defer h.wg.Done()
+	defer log.Println("done 1")
 
 	file, err := os.Open(path)
 	if err != nil {
-		return err
+		h.errs <- err
+		return
 	}
 
 	reader := bufio.NewReader(file)
@@ -71,31 +95,40 @@ func (h *fileHandler) handleJSON(path string) error {
 		data, err := reader.ReadBytes('\n')
 		if err != nil {
 			if err == io.EOF {
+				log.Println("handleJSON 1")
 				break
 			}
-			return err
+			log.Println("handleJSON 2")
+			h.errs <- err
+			return
 		}
 
 		if err := h.Parser.ParseJSON(data); err != nil {
-			return err
+			log.Println("handleJSON 3")
+			h.errs <- err
+			return
 		}
+		log.Println("handleJSON 4")
 	}
-
-	return nil
 }
 
-func (h *fileHandler) handleCSV(path string) error {
+func (h *fileHandler) handleCSV(path string) {
+
+	defer h.wg.Done()
+	defer log.Println("done 2")
 
 	file, err := os.Open(path)
 	if err != nil {
-		return err
+		h.errs <- err
+		return
 	}
 
 	reader := csv.NewReader(file)
 
 	columns, err := reader.Read()
 	if err != nil {
-		return err
+		h.errs <- err
+		return
 	}
 
 	for {
@@ -104,27 +137,30 @@ func (h *fileHandler) handleCSV(path string) error {
 			if err == io.EOF {
 				break
 			}
-			return err
+			h.errs <- err
+			return
 		}
 
 		if err := h.Parser.ParseCSV(columns, data); err != nil {
-			return err
+			h.errs <- err
+			return
 		}
 	}
-
-	return nil
 }
 
-func (h *fileHandler) handleXML(path string) error {
+func (h *fileHandler) handleXML(path string) {
+
+	defer h.wg.Done()
+	defer log.Println("done 3")
 
 	file, err := os.Open(path)
 	if err != nil {
-		return err
+		h.errs <- err
+		return
 	}
 
 	if err := h.Parser.ParseXML(file); err != nil {
-		return err
+		h.errs <- err
+		return
 	}
-
-	return nil
 }
