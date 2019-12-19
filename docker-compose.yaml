@@ -3,12 +3,11 @@ services:
   hotel-parser:
     build: .
     restart: on-failure
-    # volumes: 
-    #   - ./raw:/hotel-parser/build/raw
-    #   - ./.env:/hotel-parser/build/.env
+    volumes: 
+      - ./raw:/hotel-parser/raw
+      - ./.env:/hotel-parser/.env
     ports:
       - 8083:8081
-    command: ./app
 
   postgres:
     image: postgres:11.5

@@ -15,9 +15,6 @@ WORKDIR /hotel-parser
 COPY go.mod .
 COPY go.sum .
 
-COPY .env ./build/.env
-COPY raw ./build/raw
-
 RUN go mod download
 
 COPY . .
@@ -39,6 +36,4 @@ COPY --from=builder /hotel-parser/build /hotel-parser
 
 WORKDIR /hotel-parser
 
-# ENTRYPOINT ["/bin/sh"]
-
-# CMD [ "./app", "-dir=raw/" ]
+CMD [ "./app" ]

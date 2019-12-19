@@ -1,7 +1,12 @@
 package models
 
 import (
+	"math"
+	"regexp"
 	"strconv"
+	"strings"
+
+	strip "github.com/grokify/html-strip-tags-go"
 )
 
 // Hotel is the base datamodel of a hotel
@@ -36,7 +41,12 @@ type HotelJSON struct {
 	} `json:"images"`
 }
 
-func (h HotelJSON) ToHotelRaw() *HotelRaw {
+func (h *HotelJSON) ToHotelRaw() *HotelRaw {
+
+	description := strip.StripTags(h.EN.Description)
+	description = strings.Replace(description, "\n", " ", -1)
+	description = strings.TrimSpace(description)
+
 	images := make([]string, 0)
 	for _, image := range h.Images {
 		images = append(images, image.OrigURL)
@@ -44,13 +54,13 @@ func (h HotelJSON) ToHotelRaw() *HotelRaw {
 
 	return &HotelRaw{
 		Name:        h.EN.Name,
-		Description: h.EN.Description,
-		CountryCode: h.CountryCode,
+		Description: description,
+		CountryCode: strings.ToUpper(h.CountryCode),
 		City:        h.EN.City,
 		Address:     h.EN.Address,
 		Latitude:    h.Latitude,
 		Longitude:   h.Longitude,
-		Rating:      h.Rating.Total / 2,
+		Rating:      math.Round(h.Rating.Total / 2),
 		Images:      images,
 	}
 }
@@ -72,7 +82,7 @@ type HotelCSV struct {
 	Photo5      string `json:"photo5"`
 }
 
-func (h HotelCSV) ToHotelRaw() (hotel *HotelRaw, err error) {
+func (h *HotelCSV) ToHotelRaw() (hotel *HotelRaw, err error) {
 
 	latitude, err := strconv.ParseFloat(h.Latitude, 64)
 	if err != nil {
@@ -100,7 +110,7 @@ func (h HotelCSV) ToHotelRaw() (hotel *HotelRaw, err error) {
 	return &HotelRaw{
 		Name:        h.Name,
 		Description: h.Description,
-		CountryCode: h.CountryCode,
+		CountryCode: strings.ToUpper(h.CountryCode),
 		City:        h.City,
 		Address:     h.Address,
 		Latitude:    latitude,
@@ -108,4 +118,46 @@ func (h HotelCSV) ToHotelRaw() (hotel *HotelRaw, err error) {
 		Rating:      rating,
 		Images:      images,
 	}, nil
+}
+
+var HotelXMLName = "hotel"
+
+// HotelXML is the base datamodel of a hotel from XML data file
+type HotelXML struct {
+	Name        string  `xml:"name"`
+	Description string  `xml:"descriptions>en"`
+	CountryCode string  `xml:"countrytwocharcode"`
+	City        string  `xml:"city>en"`
+	Address     string  `xml:"address"`
+	Latitude    float64 `xml:"latitude"`
+	Longitude   float64 `xml:"longitude"`
+	Rating      float64 `xml:"stars"`
+	Images      []struct {
+		URL string `xml:"url"`
+	} `xml:"photos>photo"`
+}
+
+func (h *HotelXML) ToHotelRaw() *HotelRaw {
+
+	r := regexp.MustCompile(`\[.*?\]`)
+
+	description := r.ReplaceAllString(h.Description, "")
+	description = strings.TrimSpace(description)
+
+	images := make([]string, 0)
+	for _, image := range h.Images {
+		images = append(images, image.URL)
+	}
+
+	return &HotelRaw{
+		Name:        h.Name,
+		Description: description,
+		CountryCode: strings.ToUpper(h.CountryCode),
+		City:        h.City,
+		Address:     h.Address,
+		Latitude:    h.Latitude,
+		Longitude:   h.Longitude,
+		Rating:      h.Rating,
+		Images:      images,
+	}
 }

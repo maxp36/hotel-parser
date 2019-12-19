@@ -3,15 +3,12 @@
 ## Firts steps
 
 1. Create and edit `.env` file by `.env.example`
-2. Run `docker-compose up -d`
+2. Edit `docker-compose.yaml` file:
+    - set volume binding to the dir with raw JSON, CSV and XML files
+    - set volume binding to the `.env` file
+    - set necessary ports binding
+3. Run `docker-compose up -d`
 
-## Generate docs
-
-Run from project root^
-
-``` bash
-./docs/gen.sh
-```
 
 ## Migrate DB
 

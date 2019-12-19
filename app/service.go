@@ -1,5 +1,7 @@
 package app
 
+import "io"
+
 // Parser represent the parser's service
 type Parser interface {
 	JSONParser
@@ -19,5 +21,5 @@ type CSVParser interface {
 
 // XMLParser represent the XML parser's service
 type XMLParser interface {
-	ParseXML(data []byte) error
+	ParseXML(r io.Reader) error
 }

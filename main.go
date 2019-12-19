@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 
 	"github.com/maxp36/hotel-parser/app"
 	"github.com/maxp36/hotel-parser/app/delivery/file"
@@ -29,8 +30,7 @@ func main() {
 
 	handler := file.NewFileHandler(dir, parser)
 
-	// if err := handler.Handle(); err != nil {
-	// 	log.Println(err)
-	// }
-	handler.Handle()
+	if err := handler.Handle(); err != nil {
+		log.Fatalln(err)
+	}
 }

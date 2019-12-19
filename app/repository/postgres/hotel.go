@@ -75,8 +75,7 @@ func (r *repository) AddHotel(hotel *models.HotelRaw) error {
 		}
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := tx.Commit(); err != nil {
 		return err
 	}
 
