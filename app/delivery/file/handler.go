@@ -4,20 +4,18 @@ import (
 	"bufio"
 	"encoding/csv"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/maxp36/hotel-parser/app"
+	"github.com/maxp36/wgext"
 )
 
 // fileHandler represent the file handler for parsing files
 type fileHandler struct {
 	Dir    string
 	Parser app.Parser
-	wg     *sync.WaitGroup
-	errs   chan error
+	wg     *wgext.WaitGroup
 }
 
 // NewFileHandler inits file handler for parsing files
@@ -25,18 +23,16 @@ func NewFileHandler(dir string, p app.Parser) app.Handler {
 	return &fileHandler{
 		Dir:    dir,
 		Parser: p,
-		wg:     &sync.WaitGroup{},
-		errs:   make(chan error),
 	}
 }
 
 func (h *fileHandler) Handle() error {
 
-	h.wg = &sync.WaitGroup{}
-	h.errs = make(chan error)
+	h.wg = wgext.NewWaitGroup()
 
 	fpaths := make([]string, 0)
 
+	// collect all file paths
 	err := filepath.Walk(h.Dir,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -53,39 +49,29 @@ func (h *fileHandler) Handle() error {
 		return err
 	}
 
+	// parse all necessary files
 	for _, p := range fpaths {
 		switch filepath.Ext(p) {
-		case ".json":
-			go h.handleJSON(p)
-			h.wg.Add(1)
-		case ".csv":
-			go h.handleCSV(p)
-			h.wg.Add(1)
 		case ".xml":
-			go h.handleXML(p)
 			h.wg.Add(1)
+			go h.handleXML(p)
+		case ".json":
+			h.wg.Add(1)
+			go h.handleJSON(p)
+		case ".csv":
+			h.wg.Add(1)
+			go h.handleCSV(p)
 		}
 	}
 
-	// select {
-	// case err := <-h.errs:
-	// 	return err
-	// case h.wg.Wait():
-
-	// }
-	h.wg.Wait()
-
-	return <-h.errs
+	return h.wg.Wait()
 }
 
 func (h *fileHandler) handleJSON(path string) {
 
-	defer h.wg.Done()
-	defer log.Println("done 1")
-
 	file, err := os.Open(path)
 	if err != nil {
-		h.errs <- err
+		h.wg.Fail(err)
 		return
 	}
 
@@ -95,39 +81,40 @@ func (h *fileHandler) handleJSON(path string) {
 		data, err := reader.ReadBytes('\n')
 		if err != nil {
 			if err == io.EOF {
-				log.Println("handleJSON 1")
 				break
 			}
-			log.Println("handleJSON 2")
-			h.errs <- err
+			h.wg.Fail(err)
 			return
 		}
 
-		if err := h.Parser.ParseJSON(data); err != nil {
-			log.Println("handleJSON 3")
-			h.errs <- err
-			return
-		}
-		log.Println("handleJSON 4")
+		h.wg.Add(1)
+		go func(wg *wgext.WaitGroup, p app.Parser, d []byte) {
+			err := p.ParseJSON(d)
+			if err != nil && err != io.EOF {
+				wg.Fail(err)
+				return
+			}
+			wg.Done()
+		}(h.wg, h.Parser, data)
 	}
+
+	h.wg.Done()
 }
 
 func (h *fileHandler) handleCSV(path string) {
 
-	defer h.wg.Done()
-	defer log.Println("done 2")
-
 	file, err := os.Open(path)
 	if err != nil {
-		h.errs <- err
+		h.wg.Fail(err)
 		return
 	}
 
 	reader := csv.NewReader(file)
 
+	// read csv columns
 	columns, err := reader.Read()
 	if err != nil {
-		h.errs <- err
+		h.wg.Fail(err)
 		return
 	}
 
@@ -137,30 +124,35 @@ func (h *fileHandler) handleCSV(path string) {
 			if err == io.EOF {
 				break
 			}
-			h.errs <- err
+			h.wg.Fail(err)
 			return
 		}
 
-		if err := h.Parser.ParseCSV(columns, data); err != nil {
-			h.errs <- err
-			return
-		}
+		h.wg.Add(1)
+		go func(wg *wgext.WaitGroup, p app.Parser, cs, d []string) {
+			if err := p.ParseCSV(cs, d); err != nil {
+				wg.Fail(err)
+				return
+			}
+			wg.Done()
+		}(h.wg, h.Parser, columns, data)
 	}
+
+	h.wg.Done()
 }
 
 func (h *fileHandler) handleXML(path string) {
 
-	defer h.wg.Done()
-	defer log.Println("done 3")
-
 	file, err := os.Open(path)
 	if err != nil {
-		h.errs <- err
+		h.wg.Fail(err)
 		return
 	}
 
 	if err := h.Parser.ParseXML(file); err != nil {
-		h.errs <- err
+		h.wg.Fail(err)
 		return
 	}
+
+	h.wg.Done()
 }

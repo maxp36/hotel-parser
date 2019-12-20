@@ -29,7 +29,6 @@ func InitDB() *sqlx.DB {
 		log.Fatalln(err)
 		return nil
 	}
-	log.Println("DB connected!")
 
 	return db
 }

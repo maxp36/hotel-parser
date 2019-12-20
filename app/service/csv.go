@@ -15,6 +15,7 @@ func (s *parser) ParseCSV(columns, data []string) error {
 		m[c] = data[i]
 	}
 
+	// maybe, this's not the best solution
 	mar, err := json.Marshal(m)
 	if err != nil {
 		return err
@@ -23,6 +24,7 @@ func (s *parser) ParseCSV(columns, data []string) error {
 	if err := json.Unmarshal(mar, &hotel); err != nil {
 		return err
 	}
+	// maybe, this's not the best solution
 
 	dbHotel, err := hotel.ToHotelRaw()
 	if err != nil {
