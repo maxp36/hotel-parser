@@ -31,6 +31,8 @@ func main() {
 	handler := file.NewFileHandler(dir, parser)
 
 	if err := handler.Handle(); err != nil {
-		log.Fatalln(err)
+		log.Println(err)
+		return
 	}
+	log.Println("Done!")
 }

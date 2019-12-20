@@ -1,4 +1,7 @@
-# ARR-BACK-MESSENGER
+# HOTEL-PARSER
+
+This is Golang-program that parses JSON, CSV and XML files containing hotel data and stores this data in the database.
+WARNING: checking for the presence of similar data in the database is not performed, the data is simply added so far.
 
 ## Firts steps
 
