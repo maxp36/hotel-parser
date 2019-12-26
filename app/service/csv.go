@@ -26,9 +26,12 @@ func (s *parser) ParseCSV(columns, data []string) error {
 	}
 	// maybe, this's not the best solution
 
-	dbHotel, err := hotel.ToHotelRaw()
+	dbHotel, ok, err := hotel.ToHotelRaw()
 	if err != nil {
 		return err
+	}
+	if !ok {
+		return nil
 	}
 
 	if err := s.R.AddHotel(dbHotel); err != nil {
