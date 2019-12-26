@@ -31,7 +31,12 @@ func (s *parser) ParseXML(r io.Reader) error {
 					return err
 				}
 
-				if err := s.R.AddHotel(hotel.ToHotelRaw()); err != nil {
+				dbHotel, ok := hotel.ToHotelRaw()
+				if !ok {
+					continue
+				}
+
+				if err := s.R.AddHotel(dbHotel); err != nil {
 					return err
 				}
 			}

@@ -16,7 +16,12 @@ func (s *parser) ParseJSON(data []byte) error {
 		return err
 	}
 
-	if err := s.R.AddHotel(hotel.ToHotelRaw()); err != nil {
+	dbHotel, ok := hotel.ToHotelRaw()
+	if !ok {
+		return nil
+	}
+
+	if err := s.R.AddHotel(dbHotel); err != nil {
 		return err
 	}
 

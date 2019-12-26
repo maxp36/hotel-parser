@@ -51,3 +51,9 @@ See <https://github.com/golang-migrate/migrate/>
     ```
 
     4.2 run `docker-compose up` to up all migrations
+
+5. If an error occurs during migration, to force vesion run:
+
+    ```bash
+    migrate -database postgres://user:password@host:port/name?sslmode=disable -path db/migrations force LAST_SUCCESSFULL_VERSION
+    ```
